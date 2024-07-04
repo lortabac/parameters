@@ -1,0 +1,1 @@
+packages: ./parameters/parameters.cabal ./parameters-fx/parameters-fx.cabal
