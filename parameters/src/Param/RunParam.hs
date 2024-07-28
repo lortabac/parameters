@@ -7,6 +7,8 @@ module Param.RunParam (RunParam) where
 
 import GHC.TypeError
 
+-- | A magical constraint that triggers a type error if the parameter is already in scope.
+-- Solving this constraint requires the 'Param.Plugin' plugin.
 type RunParam p a = Assert (ParamIsNotInScope p a) (ParamIsAlreadyInScopeErr p a)
 
 type family ParamIsNotInScope p a :: Bool where

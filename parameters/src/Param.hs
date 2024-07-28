@@ -1,7 +1,6 @@
 {-# LANGUAGE GHC2021 #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# OPTIONS_GHC -fplugin Param.Plugin #-}
 
 module Param
   ( HasParam,
