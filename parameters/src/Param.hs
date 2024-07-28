@@ -1,7 +1,7 @@
 {-# LANGUAGE GHC2021 #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeFamilyDependencies #-}
+{-# OPTIONS_GHC -fplugin Param.Plugin #-}
 
 module Param
   ( HasParam,
@@ -14,7 +14,8 @@ where
 
 import GHC.Base (IP (..))
 import GHC.Exts (WithDict (..))
-import GHC.TypeLits (Symbol)
+import Param.IPName (IPName)
+import Param.RunParam (RunParam)
 
 -- | The context where an implicit parameter is available
 type HasParam p a = IP (IPName p) a
@@ -24,7 +25,7 @@ paramAsk :: forall p a. (HasParam p a) => a
 paramAsk = ip @(IPName p)
 
 -- | Start a computation in which an implicit parameter is available
-runParam :: forall p a r. a -> ((HasParam p a) => r) -> r
+runParam :: forall p a r. (RunParam p a) => a -> ((HasParam p a) => r) -> r
 runParam = withDict @(IP (IPName p) a)
 
 -- | Modify an implicit parameter locally
@@ -47,6 +48,3 @@ paramLocalM f mk = do
   r <- f (ip @(IPName p))
   k <- mk
   pure (withDict @(IP (IPName p) a) r k)
-
--- | A hack to be able to use 'IP' with types instead of 'Symbol's
-type family IPName p = (r :: Symbol) | r -> p

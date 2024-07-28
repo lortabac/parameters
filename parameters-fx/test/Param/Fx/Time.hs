@@ -1,6 +1,7 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeApplications #-}
+{-# OPTIONS_GHC -fplugin Param.Plugin #-}
 
 module Param.Fx.Time
   ( HasTime,

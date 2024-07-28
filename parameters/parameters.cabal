@@ -60,15 +60,19 @@ library
 
   -- Modules exported by the library.
   exposed-modules:  Param
+                  , Param.Plugin
+                  , Param.IPName
+                  , Param.RunParam
 
   -- Modules included in this library but not exported.
-  -- other-modules:
+  other-modules:
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
 
   -- Other library packages from which modules are imported.
   build-depends:    base
+                  , ghc
 
   -- Directories containing source files.
   hs-source-dirs:   src
