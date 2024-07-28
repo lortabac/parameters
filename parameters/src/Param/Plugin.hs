@@ -99,9 +99,9 @@ isIPTyConApp :: TyCon -> Type -> (TyCon, [Type]) -> TcPluginM Bool
 isIPTyConApp ipNameFam wantedArgP (tyCon, givenArgP : _) = do
   ipClass <- lookupIPClass
   let wantedPTyCon = tyConAppTyCon_maybe wantedArgP
-      givenPTyCon = splitTyConApp givenArgP
+      givenPTyConApp = splitTyConApp givenArgP
   if tyCon == classTyCon ipClass
-    then case (wantedPTyCon, givenPTyCon) of
+    then case (wantedPTyCon, givenPTyConApp) of
       (Just wtc, (ipNameTC, [gtc])) ->
         pure
           ( ipNameTC == ipNameFam
