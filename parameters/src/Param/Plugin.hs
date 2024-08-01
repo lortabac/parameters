@@ -16,6 +16,7 @@ import GHC.Plugins
     Role (..),
     Type,
     defaultPlugin,
+    eqType,
     mkModuleName,
     mkTcOcc,
     mkUnivCo,
@@ -23,7 +24,6 @@ import GHC.Plugins
     promotedTrueDataCon,
     showPprUnsafe,
     splitTyConApp,
-    tyConAppTyCon_maybe,
   )
 import GHC.Tc.Plugin
   ( FindResult (..),
@@ -81,14 +81,14 @@ rewriteParamIsNotInScopeCt :: ParamPluginState -> UniqFM TyCon TcPluginRewriter
 rewriteParamIsNotInScopeCt state = unitUFM (paramIsNotInScopeFam state) (paramIsNotInScopeCtRewriter state)
 
 paramIsNotInScopeCtRewriter :: ParamPluginState -> TcPluginRewriter
-paramIsNotInScopeCtRewriter state _ givens args@[_, _, argP, _] = do
+paramIsNotInScopeCtRewriter state _ givens args@[_, argP] = do
   argP' <- zonkTcType argP
   ipCts <- filterM (isIPTyConApp (ipNameFam state) argP') $ map (splitTyConApp . ctPred) givens
   if null ipCts
     then pure (TcPluginRewriteTo (reduction true) [])
     else pure (TcPluginRewriteTo (reduction false) [])
   where
-    reduction b = mkTyFamAppReduction "ParamIsNotInScope" Nominal (paramIsNotInScopeFam state) args b
+    reduction = mkTyFamAppReduction "ParamIsNotInScope" Nominal (paramIsNotInScopeFam state) args
     true = mkTyConTy promotedTrueDataCon
     false = mkTyConTy promotedFalseDataCon
 paramIsNotInScopeCtRewriter _ _ _ args = do
@@ -98,14 +98,12 @@ paramIsNotInScopeCtRewriter _ _ _ args = do
 isIPTyConApp :: TyCon -> Type -> (TyCon, [Type]) -> TcPluginM Bool
 isIPTyConApp ipNameFam wantedArgP (tyCon, givenArgP : _) = do
   ipClass <- lookupIPClass
-  let wantedPTyCon = tyConAppTyCon_maybe wantedArgP
-      givenPTyConApp = splitTyConApp givenArgP
   if tyCon == classTyCon ipClass
-    then case (wantedPTyCon, givenPTyConApp) of
-      (Just wtc, (ipNameTC, [gtc])) ->
+    then case splitTyConApp givenArgP of
+      (ipNameTC, [gtc]) ->
         pure
           ( ipNameTC == ipNameFam
-              && Just wtc == tyConAppTyCon_maybe gtc
+              && eqType wantedArgP gtc
           )
       _ -> pure False
     else pure False
@@ -150,7 +148,7 @@ mkPluginUnivCo ::
   -- | RHS
   TcType ->
   Coercion
-mkPluginUnivCo str role lhs rhs = mkUnivCo (PluginProv str) role lhs rhs
+mkPluginUnivCo str = mkUnivCo (PluginProv str)
 
 tracePpr :: (Monad m, Outputable a) => a -> m ()
 tracePpr = traceM . showPprUnsafe

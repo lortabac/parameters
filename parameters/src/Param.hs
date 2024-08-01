@@ -14,7 +14,6 @@ where
 import GHC.Base (IP (..))
 import GHC.Exts (WithDict (..))
 import Param.IPName (IPName)
-import Param.RunParam (RunParam)
 
 -- | The context where an implicit parameter is available
 type HasParam p a = IP (IPName p) a
@@ -24,7 +23,7 @@ paramAsk :: forall p a. (HasParam p a) => a
 paramAsk = ip @(IPName p)
 
 -- | Start a computation in which an implicit parameter is available
-runParam :: forall p a r. (RunParam p a) => a -> ((HasParam p a) => r) -> r
+runParam :: forall p a r. a -> ((HasParam p a) => r) -> r
 runParam = withDict @(IP (IPName p) a)
 
 -- | Modify an implicit parameter locally

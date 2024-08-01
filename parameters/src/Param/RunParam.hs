@@ -1,4 +1,5 @@
 {-# LANGUAGE GHC2021 #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -9,9 +10,9 @@ import GHC.TypeError
 
 -- | A magical constraint that triggers a type error if the parameter is already in scope.
 -- Solving this constraint requires the 'Param.Plugin' plugin.
-type RunParam p a = Assert (ParamIsNotInScope p a) (ParamIsAlreadyInScopeErr p a)
+type RunParam p = Assert (ParamIsNotInScope p) (ParamIsAlreadyInScopeErr p)
 
-type family ParamIsNotInScope p a :: Bool where
-  ParamIsNotInScope _ _ = TypeError (Text "Implicit parameters require the Param.Plugin plugin")
+type family ParamIsNotInScope p :: Bool where
+  ParamIsNotInScope _ = TypeError (Text "Implicit parameters require the Param.Plugin plugin")
 
-type ParamIsAlreadyInScopeErr p a = TypeError (Text "Parameter ‘" :<>: ShowType p :<>: Text "’ is already in scope")
+type ParamIsAlreadyInScopeErr p = TypeError (Text "Parameter ‘" :<>: ShowType p :<>: Text "’ is already in scope")

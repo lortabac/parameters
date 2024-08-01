@@ -61,6 +61,7 @@ library
 
   -- Modules exported by the library.
   exposed-modules:  Param.Fx
+                  , Param.Fx.State
 
   -- Modules included in this library but not exported.
   -- other-modules:
