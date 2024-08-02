@@ -1,7 +1,6 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE StrictData #-}
-{-# OPTIONS_GHC -fplugin Param.Plugin #-}
 
 module Param.Fx.State
   ( HasState,
@@ -25,7 +24,6 @@ import Control.Monad (void)
 import Data.IORef
 import Param
 import Param.Fx
-import Param.RunParam
 
 data StateParam (tag :: k)
 
@@ -38,7 +36,7 @@ type HasState s = HasTaggedState DefaultTag s
 runState :: forall s a. s -> ((HasState s) => Fx a) -> Fx (a, s)
 runState = runTaggedState
 
-evalState :: forall s a. (RunParam (StateParam DefaultTag)) => s -> ((HasState s) => Fx a) -> Fx a
+evalState :: forall s a. s -> ((HasState s) => Fx a) -> Fx a
 evalState = evalTaggedState
 
 execState :: forall s a. s -> ((HasState s) => Fx a) -> Fx s

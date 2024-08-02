@@ -1,10 +1,10 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeApplications #-}
-{-# OPTIONS_GHC -fplugin Param.Plugin #-}
 
 module Param.Fx.Time
   ( HasTime,
+    RunTime,
     Time (..),
     runTime,
     currentTime,
@@ -29,8 +29,10 @@ data TimeParam
 
 type HasTime = HasParam TimeParam Time
 
+type RunTime = RunParam TimeParam Time
+
 -- | Run a 'Time' effect with the provided handler
-runTime :: Time -> ((HasTime) => r) -> r
+runTime :: Time -> ((RunParam TimeParam Time) => r) -> r
 runTime = runParam @TimeParam
 
 -- | Get the current time

@@ -59,10 +59,10 @@ library
   import:           warnings
 
   -- Modules exported by the library.
-  exposed-modules:  Param
-                  , Param.Plugin
-                  , Param.IPName
-                  , Param.RunParam
+  exposed-modules:
+    Param
+    Param.Internal.IsParam
+    Param.Plugin
 
   -- Modules included in this library but not exported.
   other-modules:
@@ -71,8 +71,10 @@ library
   -- other-extensions:
 
   -- Other library packages from which modules are imported.
-  build-depends:    base
-                  , ghc
+  build-depends:
+    , base
+    , containers
+    , ghc
 
   -- Directories containing source files.
   hs-source-dirs:   src
