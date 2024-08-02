@@ -95,13 +95,13 @@ mkState s = do
       }
 
 readRef :: forall tag s. (HasTaggedState tag s) => IORef s -> Fx s
-readRef ref = fx @(StateParam tag) $ _readRef (paramAsk @(StateParam tag)) ref
+readRef ref = fx @(StateParam tag) $ _readRef (ask @(StateParam tag)) ref
 
 modifyRef :: forall tag s. (HasTaggedState tag s) => IORef s -> (s -> s) -> Fx ()
-modifyRef ref f = fx @(StateParam tag) $ _modifyRef (paramAsk @(StateParam tag)) ref f
+modifyRef ref f = fx @(StateParam tag) $ _modifyRef (ask @(StateParam tag)) ref f
 
 writeRef :: forall tag s. (HasTaggedState tag s) => IORef s -> s -> Fx ()
-writeRef ref s = fx @(StateParam tag) $ _writeRef (paramAsk @(StateParam tag)) ref s
+writeRef ref s = fx @(StateParam tag) $ _writeRef (ask @(StateParam tag)) ref s
 
 getRef :: forall tag s. (HasTaggedState tag s) => IORef s
-getRef = _ref (paramAsk @(StateParam tag))
+getRef = _ref (ask @(StateParam tag))

@@ -37,11 +37,11 @@ runTime = runParam @TimeParam
 
 -- | Get the current time
 currentTime :: (HasTime) => Fx UTCTime
-currentTime = fx @TimeParam (_currentTime (paramAsk @TimeParam))
+currentTime = fx @TimeParam (_currentTime (ask @TimeParam))
 
 -- | Get the monotonic time
 monotonicTime :: (HasTime) => Fx Double
-monotonicTime = fx @TimeParam (_monotonicTime (paramAsk @TimeParam))
+monotonicTime = fx @TimeParam (_monotonicTime (ask @TimeParam))
 
 -- | Default handler for the 'Time' effect
 defaultTime :: Time

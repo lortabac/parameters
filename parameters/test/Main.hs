@@ -19,10 +19,10 @@ main =
     testGroup
       "parameters tests"
       [ testCase "Basic param setting" $
-          let res = runParam @Foo "foo" $ paramAsk @Foo
+          let res = runParam @Foo "foo" $ ask @Foo
            in res @?= "foo",
         testCase "Param overriding" $
-          let res = runParam @Foo "hello" $ paramLocal @Foo (<> " world") $ paramAsk @Foo
+          let res = runParam @Foo "hello" $ local @Foo (<> " world") $ ask @Foo
            in res @?= "hello world",
         testCase "Two parameters" $
           let res = runParam @Foo "hello" $ runParam @Bar "world" twoParams
@@ -41,19 +41,19 @@ main =
 twoParams ::
   (HasParam Bar String, HasParam Foo String) =>
   String
-twoParams = paramAsk @Foo ++ " " ++ paramAsk @Bar
+twoParams = ask @Foo ++ " " ++ ask @Bar
 
 horror :: (HasParam Foo String) => (String, String)
 horror =
   let result :: (HasParam Foo String) => String
-      result = paramAsk @Foo
+      result = ask @Foo
    in ( result,
-        paramLocal @Foo (const "world") result
+        local @Foo (const "world") result
       )
 
 terror :: (HasParam Foo String) => (String, String)
 terror =
-  let result = paramAsk @Foo
+  let result = ask @Foo
    in ( result,
-        paramLocal @Foo (const "world") result
+        local @Foo (const "world") result
       )
