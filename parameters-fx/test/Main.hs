@@ -1,7 +1,4 @@
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# OPTIONS_GHC -fplugin Param.Plugin #-}
 
 module Main (main) where
 
@@ -28,8 +25,7 @@ main =
       ]
 
 timeTestStatic :: UTCTime -> Fx Double
-timeTestStatic now = do
-  runStaticTime now 60 getMonotonicTimeMinutes
+timeTestStatic now = runStaticTime now 60 getMonotonicTimeMinutes
 
 timeTestStaticIO :: (HasIO) => Fx Double
 timeTestStaticIO = do

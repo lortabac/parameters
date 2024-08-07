@@ -1,5 +1,4 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE StrictData #-}
 
 module Param.Fx.State

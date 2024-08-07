@@ -19,5 +19,5 @@ staticTime current monotonic =
       _monotonicTime = pure monotonic
     }
 
-runStaticTime :: UTCTime -> Double -> ((RunTime) => Fx r) -> Fx r
+runStaticTime :: UTCTime -> Double -> ((HasTime) => Fx r) -> Fx r
 runStaticTime current monotonic = runTime $ staticTime current monotonic

@@ -4,7 +4,6 @@
 
 module Param.Fx.Time
   ( HasTime,
-    RunTime,
     Time (..),
     runTime,
     currentTime,
@@ -29,10 +28,8 @@ data TimeParam
 
 type HasTime = HasParam TimeParam Time
 
-type RunTime = RunParam TimeParam Time
-
 -- | Run a 'Time' effect with the provided handler
-runTime :: Time -> ((RunParam TimeParam Time) => r) -> r
+runTime :: Time -> ((HasParam TimeParam Time) => r) -> r
 runTime = runParam @TimeParam
 
 -- | Get the current time
