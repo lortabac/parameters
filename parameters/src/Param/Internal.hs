@@ -2,12 +2,12 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
 
-module Param.Internal.IsParam
-  ( IsParam (..),
+module Param.Internal
+  ( UnivocalParam (..),
   )
 where
 
 import GHC.TypeLits (Nat)
 
-class IsParam p (n :: Nat) where
-  _isParam :: ()
+class UnivocalParam p (n :: Nat) where
+  _univocalParam :: ()

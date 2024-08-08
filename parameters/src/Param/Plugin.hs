@@ -43,7 +43,7 @@ import GHC.Tc.Types.Constraint
 import GHC.Tc.Types.Evidence (EvTerm (..))
 
 data ParamPluginState = ParamPluginState
-  { isParamClass :: Class
+  { univocalParamClass :: Class
   }
 
 plugin :: Plugin
@@ -63,73 +63,80 @@ runParamPlugin =
 
 initRunParamPlugin :: TcPluginM ParamPluginState
 initRunParamPlugin = do
-  isParamMdl <- lookupModule "Param.Internal.IsParam"
-  isParamClass <- lookupClass isParamMdl "IsParam"
+  internalMdl <- lookupModule "Param.Internal"
+  univocalParamClass <- lookupClass internalMdl "UnivocalParam"
   pure
     ParamPluginState
-      { isParamClass
+      { univocalParamClass
       }
 
 checkHasParamGivens :: ParamPluginState -> TcPluginSolver
 checkHasParamGivens state _ givens [] = do
-  let isParam0Cts = getIsParam0Cts (isParamClass state) givens
-      solved = map (\ct -> (evTermFromCt ct, ct)) isParam0Cts
-  uniqueIsParam0Cts <- traverse makeIsParamCtUnique isParam0Cts
-  pure $ TcPluginOk solved uniqueIsParam0Cts
+  let univocalParam0Cts = getUnivocalParam0Cts (univocalParamClass state) givens
+      solved = map (\ct -> (evTermFromCt ct, ct)) univocalParam0Cts
+  uniqueUnivocalParam0Cts <- traverse makeUnivocalParamCtUnique univocalParam0Cts
+  pure $ TcPluginOk solved uniqueUnivocalParam0Cts
 checkHasParamGivens state _ givens wanteds = do
-  let wantedParamTypes = getIsParamParamTypes (isParamClass state) wanteds
-      isParam0CtsGivenMap = map (\ty -> (ty, getIsParamCtsForParam (isParamClass state) givens ty)) wantedParamTypes
-      solvableParamTypes = mapMaybe getSolvableType isParam0CtsGivenMap
-      isParamSolvableWanteds = concatMap (getIsParamCtsForParam (isParamClass state) wanteds) solvableParamTypes
-      solved = map (\ct -> (evTermFromCt ct, ct)) isParamSolvableWanteds
+  let wantedParamTypes = getUnivocalParamParamTypes (univocalParamClass state) wanteds
+      univocalParam0CtsGivenMap =
+        map
+          (\ty -> (ty, getUnivocalParamCtsForParam (univocalParamClass state) givens ty))
+          wantedParamTypes
+      solvableParamTypes = mapMaybe getSolvableType univocalParam0CtsGivenMap
+      univocalParamSolvableWanteds =
+        concatMap
+          (getUnivocalParamCtsForParam (univocalParamClass state) wanteds)
+          solvableParamTypes
+      solved = map (\ct -> (evTermFromCt ct, ct)) univocalParamSolvableWanteds
   pure $ TcPluginOk solved []
 
 getSolvableType :: (Type, [Ct]) -> Maybe Type
 getSolvableType (ty, cts) = case cts of
+  [] -> Just ty
   [_] -> Just ty
   _ -> Nothing
 
 evTermFromCt :: Ct -> EvTerm
 evTermFromCt CDictCan {cc_ev = ev} = ctEvTerm ev
-evTermFromCt _ = error "The impossible happened: IsParam Ct is not a CDictCan"
+evTermFromCt _ = error "The impossible happened: UnivocalParam Ct is not a CDictCan"
 
-makeIsParamCtUnique :: Ct -> TcPluginM Ct
-makeIsParamCtUnique ct@CDictCan {cc_tyargs = [t, p, _]} = do
+makeUnivocalParamCtUnique :: Ct -> TcPluginM Ct
+makeUnivocalParamCtUnique ct@CDictCan {cc_tyargs = [t, p, _]} = do
   n <- unsafeTcPluginTcM $ liftIO $ fromIntegral . hashUnique <$> newUnique
   pure ct {cc_tyargs = [t, p, mkNumLitTy n]}
-makeIsParamCtUnique ct = pure ct
+makeUnivocalParamCtUnique ct = pure ct
 
-getIsParam0Cts :: Class -> [Ct] -> [Ct]
-getIsParam0Cts isParamClass = filter (isIsParam0Ct isParamClass)
+getUnivocalParam0Cts :: Class -> [Ct] -> [Ct]
+getUnivocalParam0Cts univocalParamClass = filter (isUnivocalParam0Ct univocalParamClass)
 
-isIsParam0Ct :: Class -> Ct -> Bool
-isIsParam0Ct isParamClass ct = case splitTyConApp_maybe (ctPred ct) of
+isUnivocalParam0Ct :: Class -> Ct -> Bool
+isUnivocalParam0Ct univocalParamClass ct = case splitTyConApp_maybe (ctPred ct) of
   Just (ctCon, [_, _, n]) ->
-    ctCon == classTyCon isParamClass
+    ctCon == classTyCon univocalParamClass
       && isNumLitTy n == Just 0
   _ -> False
 
-getIsParamCtsForParam :: Class -> [Ct] -> Type -> [Ct]
-getIsParamCtsForParam isParamClass cts p =
-  filter (isIsParamCtForParam isParamClass p) cts
+getUnivocalParamCtsForParam :: Class -> [Ct] -> Type -> [Ct]
+getUnivocalParamCtsForParam univocalParamClass cts p =
+  filter (isUnivocalParamCtForParam univocalParamClass p) cts
 
-isIsParamCtForParam :: Class -> Type -> Ct -> Bool
-isIsParamCtForParam isParamClass paramTy ct =
+isUnivocalParamCtForParam :: Class -> Type -> Ct -> Bool
+isUnivocalParamCtForParam univocalParamClass paramTy ct =
   case splitTyConApp_maybe (ctPred ct) of
     Just (ctCon, [_, p, _]) ->
-      ctCon == classTyCon isParamClass
+      ctCon == classTyCon univocalParamClass
         && eqType paramTy p
     _ -> False
 
-getIsParamParamTypes :: Class -> [Ct] -> [Type]
-getIsParamParamTypes isParamClass =
-  mapMaybe (getIsParamParamTypeFromCt isParamClass)
+getUnivocalParamParamTypes :: Class -> [Ct] -> [Type]
+getUnivocalParamParamTypes univocalParamClass =
+  mapMaybe (getUnivocalParamParamTypeFromCt univocalParamClass)
 
-getIsParamParamTypeFromCt :: Class -> Ct -> Maybe Type
-getIsParamParamTypeFromCt isParamClass ct =
+getUnivocalParamParamTypeFromCt :: Class -> Ct -> Maybe Type
+getUnivocalParamParamTypeFromCt univocalParamClass ct =
   case splitTyConApp_maybe (ctPred ct) of
     Just (ctCon, [_, p, _]) ->
-      if ctCon == classTyCon isParamClass
+      if ctCon == classTyCon univocalParamClass
         then Just p
         else Nothing
     _ -> Nothing

@@ -13,14 +13,14 @@ where
 import GHC.Base (IP (..))
 import GHC.Exts (WithDict (..))
 import GHC.TypeLits (Symbol)
-import Param.Internal.IsParam (IsParam (..))
+import Param.Internal (UnivocalParam (..))
 
 -- | The context in which an implicit parameter is available
-type HasParam p a = (IP (IPName p) a, IsParam p 0)
+type HasParam p a = (IP (IPName p) a, UnivocalParam p 0)
 
 -- | Start a computation in which an implicit parameter is available
 runParam :: forall p a r. a -> ((HasParam p a) => r) -> r
-runParam x k = withDict @(IP (IPName p) a) x (withDict @(IsParam p 0) () k)
+runParam x k = withDict @(IP (IPName p) a) x (withDict @(UnivocalParam p 0) () k)
 
 -- | Retrieve the value of an implicit parameter (requires a type-application)
 ask :: forall p a. (HasParam p a) => a
