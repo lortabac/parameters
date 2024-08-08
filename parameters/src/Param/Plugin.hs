@@ -3,8 +3,7 @@
 module Param.Plugin (plugin) where
 
 import Control.Monad.IO.Class (MonadIO (..))
-import Data.List (find)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (mapMaybe)
 import Data.Unique (hashUnique, newUnique)
 import Debug.Trace
 import GHC (Class, Module, PkgQual (NoPkgQual))
@@ -78,13 +77,17 @@ checkHasParamGivens state _ givens [] = do
   uniqueIsParam0Cts <- traverse makeIsParamCtUnique isParam0Cts
   pure $ TcPluginOk solved uniqueIsParam0Cts
 checkHasParamGivens state _ givens wanteds = do
-  let ps = getIsParamParamTypes (isParamClass state) wanteds
-      isParam0CtsWanted = concatMap (getIsParamCtsForParam (isParamClass state) wanteds) ps
-      isParam0CtsGivenMap = map (getIsParamCtsForParam (isParamClass state) givens) ps
-      solved = map (\ct -> (evTermFromCt ct, ct)) isParam0CtsWanted
-  case find (\cts -> length cts > 1) isParam0CtsGivenMap of
-    Just _ -> pure $ TcPluginOk [] []
-    _ -> pure $ TcPluginOk solved []
+  let wantedParamTypes = getIsParamParamTypes (isParamClass state) wanteds
+      isParam0CtsGivenMap = map (\ty -> (ty, getIsParamCtsForParam (isParamClass state) givens ty)) wantedParamTypes
+      solvableParamTypes = mapMaybe getSolvableType isParam0CtsGivenMap
+      isParamSolvableWanteds = concatMap (getIsParamCtsForParam (isParamClass state) wanteds) solvableParamTypes
+      solved = map (\ct -> (evTermFromCt ct, ct)) isParamSolvableWanteds
+  pure $ TcPluginOk solved []
+
+getSolvableType :: (Type, [Ct]) -> Maybe Type
+getSolvableType (ty, cts) = case cts of
+  [_] -> Just ty
+  _ -> Nothing
 
 evTermFromCt :: Ct -> EvTerm
 evTermFromCt CDictCan {cc_ev = ev} = ctEvTerm ev
@@ -120,7 +123,7 @@ isIsParamCtForParam isParamClass paramTy ct =
 
 getIsParamParamTypes :: Class -> [Ct] -> [Type]
 getIsParamParamTypes isParamClass =
-  map (getIsParamParamTypeFromCt' isParamClass)
+  mapMaybe (getIsParamParamTypeFromCt isParamClass)
 
 getIsParamParamTypeFromCt :: Class -> Ct -> Maybe Type
 getIsParamParamTypeFromCt isParamClass ct =
@@ -130,13 +133,6 @@ getIsParamParamTypeFromCt isParamClass ct =
         then Just p
         else Nothing
     _ -> Nothing
-
-getIsParamParamTypeFromCt' :: Class -> Ct -> Type
-getIsParamParamTypeFromCt' cls ct =
-  fromMaybe err $
-    getIsParamParamTypeFromCt cls ct
-  where
-    err = error "The impossible happened: IsParam ct doesn't have a param type"
 
 lookupModule :: String -> TcPluginM Module
 lookupModule name = do
