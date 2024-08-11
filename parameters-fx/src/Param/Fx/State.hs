@@ -1,21 +1,23 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE StrictData #-}
 
 module Param.Fx.State
-  ( HasState,
+  ( -- * Untagged state effect
+    HasState,
     runState,
     evalState,
     execState,
     get,
-    modify,
     put,
-    HasTaggedState,
-    runTaggedState,
-    evalTaggedState,
-    execTaggedState,
+    modify,
+
+    -- * Tagged state effect
+    HasStateTagged,
+    runStateTagged,
+    evalStateTagged,
+    execStateTagged,
     getTagged,
-    modifyTagged,
     putTagged,
+    modifyTagged,
   )
 where
 
@@ -26,81 +28,77 @@ import Param.Fx
 
 data StateParam (tag :: k)
 
-type HasTaggedState (tag :: k) s = HasParam (StateParam tag) (State s)
+-- | The context of a stateful computation
+type HasState s = HasStateTagged DefaultTag s
+
+-- | Same as 'HasState' but tagged with a unique type variable.
+-- This allows multiple states to be in scope at the same time.
+type HasStateTagged (tag :: k) s = HasParam (StateParam tag) (State s)
 
 data DefaultTag
 
-type HasState s = HasTaggedState DefaultTag s
-
+-- | Start a stateful computation.
+-- It returns both the result of the computation and the final state.
 runState :: forall s a. s -> ((HasState s) => Fx a) -> Fx (a, s)
-runState = runTaggedState
+runState = runStateTagged
 
+-- | Start a stateful computation.
+-- It returns the result of the computation.
 evalState :: forall s a. s -> ((HasState s) => Fx a) -> Fx a
-evalState = evalTaggedState
+evalState = evalStateTagged
 
+-- | Start a stateful computation.
+-- It returns the final state.
 execState :: forall s a. s -> ((HasState s) => Fx a) -> Fx s
-execState = execTaggedState
+execState = execStateTagged
 
+-- | Retrieve the state
 get :: forall s. (HasState s) => Fx s
 get = getTagged @DefaultTag
 
-modify :: forall s. (HasState s) => (s -> s) -> Fx ()
-modify = modifyTagged @DefaultTag
-
+-- | Replace the state
 put :: forall s. (HasState s) => s -> Fx ()
 put = putTagged @DefaultTag
 
-runTaggedState ::
+-- | Modify the state
+modify :: forall s. (HasState s) => (s -> s) -> Fx ()
+modify = modifyTagged @DefaultTag
+
+runStateTagged ::
   forall tag s a.
   s ->
-  ((HasTaggedState tag s) => Fx a) ->
+  ((HasStateTagged tag s) => Fx a) ->
   Fx (a, s)
-runTaggedState initState k = runParamFx @(StateParam tag) (mkState initState) $ do
+runStateTagged initState k = runParamFx @(StateParam tag) (mkState initState) $ do
   r <- k
   s <- readRef @tag (getRef @tag)
   pure (r, s)
 
-evalTaggedState :: forall tag s a. s -> ((HasTaggedState tag s) => Fx a) -> Fx a
-evalTaggedState s k = fst <$> runTaggedState @tag s k
+evalStateTagged :: forall tag s a. s -> ((HasStateTagged tag s) => Fx a) -> Fx a
+evalStateTagged s k = fst <$> runStateTagged @tag s k
 
-execTaggedState :: forall tag s a. s -> ((HasTaggedState tag s) => Fx a) -> Fx s
-execTaggedState s k = snd <$> runTaggedState @tag s k
+execStateTagged :: forall tag s a. s -> ((HasStateTagged tag s) => Fx a) -> Fx s
+execStateTagged s k = snd <$> runStateTagged @tag s k
 
-getTagged :: forall tag s. (HasTaggedState tag s) => Fx s
+getTagged :: forall tag s. (HasStateTagged tag s) => Fx s
 getTagged = readRef @tag (getRef @tag)
 
-modifyTagged :: forall tag s. (HasTaggedState tag s) => (s -> s) -> Fx ()
-modifyTagged = modifyRef @tag (getRef @tag)
+putTagged :: forall tag s. (HasStateTagged tag s) => s -> Fx ()
+putTagged s = fx @(StateParam tag) $ writeIORef (getRef @tag) s
 
-putTagged :: forall tag s. (HasTaggedState tag s) => s -> Fx ()
-putTagged = writeRef @tag (getRef @tag)
+modifyTagged :: forall tag s. (HasStateTagged tag s) => (s -> s) -> Fx ()
+modifyTagged f = fx @(StateParam tag) $ atomicModifyIORef_ (getRef @tag) f
 
-data State s = State
-  { _readRef :: IORef s -> IO s,
-    _modifyRef :: IORef s -> (s -> s) -> IO (),
-    _writeRef :: IORef s -> s -> IO (),
-    _ref :: IORef s
-  }
+newtype State s = State {_ref :: IORef s}
 
 mkState :: s -> IO (State s)
-mkState s = do
-  ref <- newIORef s
-  pure
-    State
-      { _readRef = readIORef,
-        _modifyRef = \r f -> void $ atomicModifyIORef' r (\x -> (f x, ())),
-        _writeRef = atomicWriteIORef,
-        _ref = ref
-      }
+mkState s = State <$> newIORef s
 
-readRef :: forall tag s. (HasTaggedState tag s) => IORef s -> Fx s
-readRef ref = fx @(StateParam tag) $ _readRef (ask @(StateParam tag)) ref
+readRef :: forall tag s. (HasStateTagged tag s) => IORef s -> Fx s
+readRef ref = fx @(StateParam tag) $ readIORef ref
 
-modifyRef :: forall tag s. (HasTaggedState tag s) => IORef s -> (s -> s) -> Fx ()
-modifyRef ref f = fx @(StateParam tag) $ _modifyRef (ask @(StateParam tag)) ref f
-
-writeRef :: forall tag s. (HasTaggedState tag s) => IORef s -> s -> Fx ()
-writeRef ref s = fx @(StateParam tag) $ _writeRef (ask @(StateParam tag)) ref s
-
-getRef :: forall tag s. (HasTaggedState tag s) => IORef s
+getRef :: forall tag s. (HasStateTagged tag s) => IORef s
 getRef = _ref (ask @(StateParam tag))
+
+atomicModifyIORef_ :: IORef a -> (a -> a) -> IO ()
+atomicModifyIORef_ ref f = void $ atomicModifyIORef' ref (\x -> (f x, ()))

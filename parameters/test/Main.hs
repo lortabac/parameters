@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
 {-# OPTIONS_GHC -fplugin Param.Plugin #-}
 
 module Main (main) where
@@ -25,10 +26,23 @@ main =
            in res @?= "hello world",
         testCase "Two parameters inverted (order of constraints doesn't matter)" $
           let res = runParam @Bar "world" $ runParam @Foo "hello" twoParams
-           in res @?= "hello world"
+           in res @?= "hello world",
+        testCase "Param overriding" $
+          let res = runParam @Foo "hello" $ local @Foo (<> " world") $ ask @Foo
+           in res @?= "hello world",
+        testCase "Chris Done's terror" $
+          let res = runParam @Foo "hello" terror
+           in res @?= ("hello", "world")
       ]
 
 twoParams ::
   (HasParam Bar String, HasParam Foo String) =>
   String
 twoParams = ask @Foo ++ " " ++ ask @Bar
+
+terror :: (HasParam Foo String) => (String, String)
+terror =
+  let result = ask @Foo
+   in ( result,
+        local @Foo (const "world") result
+      )

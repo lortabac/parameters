@@ -7,6 +7,8 @@ import Data.Time
 import Param.Fx
 import Param.Fx.Time
 import Param.Fx.Time.Mock
+import Test.Param.Fx.Error
+import Test.Param.Fx.State
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -15,14 +17,23 @@ main =
   defaultMain $
     testGroup
       "parameters-fx tests"
-      [ testCase "Static time" $ do
-          now <- getCurrentTime
-          res <- liftIO $ runFx (timeTestStatic now)
-          res @?= 1,
-        testCase "Static time with embedded IO" $ do
-          res <- liftIO $ runFxWithIO timeTestStaticIO
-          res @?= 1
+      [ reinterpretationTests,
+        stateTests,
+        errorTests
       ]
+
+reinterpretationTests :: TestTree
+reinterpretationTests =
+  testGroup
+    "reinterpretation"
+    [ testCase "Static time" $ do
+        now <- getCurrentTime
+        res <- liftIO $ runFx (timeTestStatic now)
+        res @?= 1,
+      testCase "Static time with embedded IO" $ do
+        res <- liftIO $ runFxWithIO timeTestStaticIO
+        res @?= 1
+    ]
 
 timeTestStatic :: UTCTime -> Fx Double
 timeTestStatic now = runStaticTime now 60 getMonotonicTimeMinutes
