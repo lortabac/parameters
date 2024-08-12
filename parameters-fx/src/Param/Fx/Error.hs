@@ -22,11 +22,10 @@ where
 import Control.Exception
 import Data.Typeable (Typeable)
 import GHC.Exts (Any)
-import Param
 import Param.Fx
 import Unsafe.Coerce (unsafeCoerce)
 
-data ErrorParam (tag :: k)
+data ErrorEff (tag :: k)
 
 -- | The context of a computation in which errors of type 'e' may be thrown
 -- and optionally caught
@@ -34,7 +33,7 @@ type HasError e = HasErrorTagged DefaultTag e
 
 -- | Same as 'HasError' but tagged with a type variable.
 -- This allows multiple error effects to be in scope at the same time.
-type HasErrorTagged (tag :: k) e = HasParam (ErrorParam tag) ()
+type HasErrorTagged (tag :: k) e = HasEffect (ErrorEff tag)
 
 data DefaultTag
 
@@ -92,8 +91,8 @@ runErrorTagged ::
   (TypeablePoly tag) =>
   ((HasErrorTagged tag e) => Fx a) ->
   Fx (Either e a)
-runErrorTagged k = runParam @(ErrorParam tag) () $
-  fx @(ErrorParam tag) $
+runErrorTagged k = runEffect @(ErrorEff tag) $
+  fxNoParam @(ErrorEff tag) $
     catch (Right <$> runFx k) $
       \(ErrorWrapper err :: ErrorWrapper tag) -> pure (Left (unsafeCoerce err :: e))
 
@@ -103,7 +102,7 @@ throwErrorTagged ::
   e ->
   Fx a
 throwErrorTagged e =
-  fx @(ErrorParam tag) $
+  fxNoParam @(ErrorEff tag) $
     throwIO @(ErrorWrapper tag) (ErrorWrapper (unsafeCoerce e :: Any))
 
 catchErrorTagged ::
@@ -112,7 +111,7 @@ catchErrorTagged ::
   ((HasErrorTagged tag e) => Fx a) ->
   (e -> Fx a) ->
   Fx a
-catchErrorTagged action handler = fx @(ErrorParam tag) $
+catchErrorTagged action handler = fxNoParam @(ErrorEff tag) $
   catch (runFx action) $ \(ErrorWrapper err :: ErrorWrapper tag) ->
     runFx $ handler (unsafeCoerce err :: e)
 
