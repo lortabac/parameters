@@ -2,12 +2,11 @@
 
 Implicit parameters with sensible semantics.
 
-## Getting started
+## Description
 
 This library provides an implementation of type-safe dynamic scoping in Haskell.
 If you are familiar with `transformers`, you can think of it as a `Reader` that doesn't require a monad.
 
-### Example
 Let's start with an example.
 
 Suppose you have an application that uses a database.
@@ -21,6 +20,8 @@ It works well but it has two drawbacks:
 This library offers an alternative: it allows you to carry around the argument *implicitly* as a type-class constraint.
 
 ```Haskell
+import Param
+
 data ConnParam
 
 main :: IO ()
@@ -46,3 +47,15 @@ Let's have a closer look at this code snippet:
 
 As you can see, the `ConnParam` parameter is available in `initDatabase` even though it is defined in a lexically separate location.
 The compiler takes care of propagating the argument implicitly up to the place where it is used.
+
+## The typechecker plugin
+
+If you enable the `Param.Plugin` plugin, the compiler will check that `HasParam` can be solved unambiguously.
+Trying to access a parameter that has more than one definition in scope will result in a type error.
+
+```Haskell
+{-# OPTIONS_GHC -fplugin Param.Plugin #-}
+
+foo :: Int
+foo = runParam @Foo 1 $ runParam @Foo 2 $ ask @Foo -- Doesn't compile
+```
