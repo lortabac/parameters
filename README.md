@@ -37,7 +37,7 @@ initDatabase conn = do
 
 It works well but it has two drawbacks:
 - It is verbose.
-- It doesn't give you a way to distinguish between arguments that are meant to be consumed locally and configuration arguments that need to be available in a wide part of the code base. This is particularly relevant in complex applications where "configuration" parameters often outnumber local parameters.
+- It doesn't give you a way to distinguish between arguments that are meant to be consumed locally and configuration arguments that need to be available in a wide part of the code base. This is particularly relevant in complex applications where "configuration" parameters often outnumber local parameters (for example something like `Connection -> Logger -> MetricsBackend -> UserId -> IO ()` where `UserId` is the only "real" parameter).
 
 #### Implicit parameters
 
