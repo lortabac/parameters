@@ -12,7 +12,7 @@ If you are familiar with `transformers`, you can think of it as a `Reader` that 
 Let's start with an example.
 
 Suppose you have an application that uses a database.
-Some functions in your application will need the database connection handle. Some won't.
+The connection handle is created at startup and is needed by various functions that are syntactically far from where it is created.
 
 #### Explicit argument passing
 
@@ -37,7 +37,7 @@ initDatabase conn = do
 
 It works well but it has two drawbacks:
 - It is verbose.
-- It doesn't give you a way to distinguish between arguments that are meant to be consumed locally and configuration arguments that need to be available in a wide part of the code base.
+- It doesn't give you a way to distinguish between arguments that are meant to be consumed locally and configuration arguments that need to be available in a wide part of the code base. This is particularly relevant in complex applications where "configuration" parameters often outnumber local parameters.
 
 #### Implicit parameters
 
