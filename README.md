@@ -1,6 +1,6 @@
 # Parameters
 
-Implicit parameters with sensible semantics.
+Implicit parameters with `Reader`-like semantics.
 
 ## The `parameters` library
 
