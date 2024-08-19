@@ -93,6 +93,14 @@ Implicit parameters can be used to instantiate abstract interfaces with concrete
 The idea is to define a record of functions for the interface:
 
 ```Haskell
+module FileRW (
+    FileRW
+  , HasFileRW
+  , runFileRW
+  , ioReadFile
+  , ioWriteFile
+  ) where
+
 -- | An interface for file reading and writing
 data FileRW = FileRW
   { _readFile :: FilePath -> IO String
@@ -115,11 +123,11 @@ type HasFileRW = HasParam FileRWParam FileRW
 runFileRW :: FileRW -> (HasFileRW => IO a) -> IO a
 runFileRW = runParam @FileRWParam
 
-readAFile :: HasFileRW => FilePath -> IO String
-readAFile = _readFile (ask @FileRWParam)
+ioReadFile :: HasFileRW => FilePath -> IO String
+ioReadFile = _readFile (ask @FileRWParam)
 
-writeAFile :: HasFileRW => FilePath -> String -> IO ()
-writeAFile = _writeFile (ask @FileRWParam)
+ioWriteFile :: HasFileRW => FilePath -> String -> IO ()
+ioWriteFile = _writeFile (ask @FileRWParam)
 ```
 
 Then you can offer a default implementation that does the obvious thing:
@@ -141,3 +149,36 @@ mockFileRW = FileRW
   , _writeFile _ _ = pure ()
   }
 ```
+
+## The `parameters-fx` library
+
+While the simplicity of this solution may be appropriate for lots of use cases,
+in complex applications a more fine-grained definition of side effects can be beneficial to understand the behavior of the various components of the program.
+
+That's where the `Fx` type becomes useful.
+
+`Fx` is an alternative IO type.
+It is a `Monad` like `IO` but it has an additional restriction:
+every IO action that is performed in `Fx` must be part of an "effect",
+that is a module where a bunch of actions are defined, together with an associated constraint.
+
+### Effects that depend on implicit parameters
+
+One way to embed an `IO` action into `Fx` is to attach it to an implicit parameter, via the `fx` function.
+
+In the case of the "FileRW" effect, the parameter is `FileRWParam`:
+
+```Haskell
+fxReadFile :: HasFileRW => FilePath -> Fx String
+fxReadFile path = fx @FileRWParam $ ioReadFile path
+
+fxWriteFile :: HasFileRW => FilePath -> String -> Fx ()
+fxWriteFile path contents = fx @FileRwParam $ ioWriteFile path contents
+```
+
+`fx`'s signature guarantees that each function that depends on an effectful action will need the constraint
+that is associated to the corresponding effect.
+In this case every function that depends on either `fxReadFile` or `fxWriteFile` will need the `HasFileRW` constraint.
+
+Moreover, since `FileRWParam` is not exported, we know that all the "FileRW" actions must be defined in the `FileRW` module.
+If a parameter is not exported, an effect cannot be extended outside of its module.
