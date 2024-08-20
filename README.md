@@ -196,12 +196,21 @@ This can be easily achieved with `fxNoParam`, which is similar to `fx` but requi
 and an arbitrary data type instead of a parameter.
 
 ```Haskell
+module Concurrency (
+    HasConcurrency
+  , runConcurrency
+  , forkFx
+  ) where
+
 data ConcurrencyEff
 
 type HasConcurrency = HasEffect ConcurrencyEff
 
 runConcurrency :: (HasConcurrency => Fx a) -> Fx a
 runConcurrency = runEffect @ConcurrencyEff
+
+forkFx :: HasConcurrency => Fx () -> Fx ThreadId
+forkFx action = fxNoParam @ConcurrencyEff $ forkIO action
 ```
 
 ### Performing arbitrary IO
