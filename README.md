@@ -95,14 +95,6 @@ Implicit parameters can be used to instantiate abstract interfaces with concrete
 The idea is to define a record of functions for the interface:
 
 ```Haskell
-module FileRW (
-    FileRW
-  , HasFileRW
-  , runFileRW
-  , ioReadFile
-  , ioWriteFile
-  ) where
-
 -- | An interface for file reading and writing
 data FileRW = FileRW
   { _readFile :: FilePath -> IO String
@@ -122,14 +114,14 @@ The implicit parameter is not exported. We offer a high-level API instead:
 ```Haskell
 type HasFileRW = HasParam FileRWParam FileRW
 
-runFileRW :: FileRW -> (HasFileRW => IO a) -> IO a
+runFileRW :: FileRW -> (HasFileRW => a) -> a
 runFileRW = runParam @FileRWParam
 
-ioReadFile :: HasFileRW => FilePath -> IO String
-ioReadFile = _readFile (ask @FileRWParam)
+readFile' :: HasFileRW => FilePath -> IO String
+readFile' = _readFile (ask @FileRWParam)
 
-ioWriteFile :: HasFileRW => FilePath -> String -> IO ()
-ioWriteFile = _writeFile (ask @FileRWParam)
+writeFile' :: HasFileRW => FilePath -> String -> IO ()
+writeFile' = _writeFile (ask @FileRWParam)
 ```
 
 Then you can offer a default implementation that does the obvious thing:
@@ -137,8 +129,8 @@ Then you can offer a default implementation that does the obvious thing:
 ```Haskell
 defaultFileRW :: FileRW
 defaultFileRW = FileRW
-  { _readFile = readFile
-  , _writeFile = writeFile
+  { _readFile = System.IO.readFile
+  , _writeFile = System.IO.writeFile
   }
 ```
 
@@ -171,11 +163,11 @@ One way to embed an `IO` action into `Fx` is to attach it to an implicit paramet
 In the case of the "FileRW" effect, the parameter is `FileRWParam`:
 
 ```Haskell
-fxReadFile :: HasFileRW => FilePath -> Fx String
-fxReadFile path = fx @FileRWParam $ ioReadFile path
+readFile :: HasFileRW => FilePath -> Fx String
+readFile path = fx @FileRWParam $ readFile' path
 
-fxWriteFile :: HasFileRW => FilePath -> String -> Fx ()
-fxWriteFile path contents = fx @FileRwParam $ ioWriteFile path contents
+writeFile :: HasFileRW => FilePath -> String -> Fx ()
+writeFile path contents = fx @FileRwParam $ writeFile' path contents
 ```
 
 `fx`'s signature guarantees that each function that depends on an effectful action will need the constraint
