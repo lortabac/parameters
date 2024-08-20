@@ -2,6 +2,8 @@
 
 Implicit parameters with `Reader`-like semantics.
 
+Warning: experimental code, use at your own risk!
+
 ## The `parameters` library
 
 This library provides an implementation of type-safe dynamic scoping in Haskell.
@@ -182,3 +184,34 @@ In this case every function that depends on either `fxReadFile` or `fxWriteFile`
 
 Moreover, since `FileRWParam` is not exported, we know that all the "FileRW" actions must be defined in the `FileRW` module.
 If a parameter is not exported, an effect cannot be extended outside of its module.
+
+### Effects that do not depend on implicit parameters
+
+You can also define effects that do not depend on a parameter.
+
+For example we may want to define a "Concurrency" effect, whose main action simply calls `forkIO`.
+No interface is needed, since we don't want to provide the ability to override the default implementation.
+
+This can be easily achieved with `fxNoParam`, which is similar to `fx` but requires `HasEffect` instead of `HasParam`
+and an arbitrary data type instead of a parameter.
+
+```Haskell
+data ConcurrencyEff
+
+type HasConcurrency = HasEffect ConcurrencyEff
+
+runConcurrency :: (HasConcurrency => Fx a) -> Fx a
+runConcurrency = runEffect @ConcurrencyEff
+```
+
+### Performing arbitrary IO
+
+The third way to embed an `IO` action into `Fx` is `embedIO`.
+This method requires the `HasIO` constraint.
+
+### Running the Fx monad
+
+There are two ways to start an `Fx` computation:
+
+1. `runFx`, which starts an `Fx` action in which no arbitrary `IO` can be performed.
+2. `runFxWithIO`, which starts an `Fx` action in which arbitrary `IO` can be embedded with `embedIO`.
