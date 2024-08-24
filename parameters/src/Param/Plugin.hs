@@ -14,7 +14,6 @@ import GHC.Plugins
     Type,
     defaultPlugin,
     emptyUFM,
-    eqType,
     isNumLitTy,
     mkModuleName,
     mkNumLitTy,
@@ -41,6 +40,7 @@ import GHC.Tc.Types.Constraint
     ctPred,
   )
 import GHC.Tc.Types.Evidence (EvTerm (..))
+import GHC.Tc.Utils.TcType (eqType)
 
 data ParamPluginState = ParamPluginState
   { univocalParamClass :: Class

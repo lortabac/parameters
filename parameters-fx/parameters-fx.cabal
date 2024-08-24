@@ -73,7 +73,7 @@ library
 
   -- Other library packages from which modules are imported.
   build-depends:
-    , base        ^>=4.17.2.1
+    , base
     , parameters
 
   -- Directories containing source files.
@@ -111,7 +111,7 @@ test-suite parameters-fx-test
 
   -- Test dependencies.
   build-depends:
-    , base           ^>=4.17.2.1
+    , base
     , parameters
     , parameters-fx
     , tasty
