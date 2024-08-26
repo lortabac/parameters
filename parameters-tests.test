@@ -1,0 +1,3 @@
+$ cabal build exe:param-test1 > /dev/null
+>2 /UnivocalParam/
+>= !0
