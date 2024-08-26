@@ -41,10 +41,14 @@ jobs:
     - name: Install dependencies
       run: |
         cabal update
-        cabal build --only-dependencies --enable-tests --enable-benchmarks all
+        cabal install shelltestrunner-1.10
+        cabal build --only-dependencies --enable-tests --enable-benchmarks parameters parameters-fx
         
     - name: Build
-      run: cabal build --enable-tests --enable-benchmarks all
+      run: cabal build --enable-tests --enable-benchmarks parameters parameters-fx
       
     - name: Run tests
-      run: cabal test all
+      run: cabal test parameters parameters-fx
+
+    - name: Run shell tests
+      run: shelltest -c -d parameters-tests.test
