@@ -27,6 +27,16 @@ errorTests =
             runError @String @String $
               throwError "bar" `catchError` (\e -> pure ("caught: " ++ e))
         res @?= Right ("caught: bar"),
+      testCase "untagged catch with IO" $ do
+        res <-
+          runFxWithIO $
+            runError @String @String $
+              throwError "bar"
+                `catchError` ( \e -> do
+                                 embedIO $ pure ()
+                                 pure ("caught: " ++ e)
+                             )
+        res @?= Right ("caught: bar"),
       testCase "basic tagged no error" $ do
         res <- runFx $ runErrorTagged @"err" @() (pure "foo")
         res @?= Right "foo",

@@ -62,5 +62,15 @@ executable param-test1
     , base
     , parameters
 
-  hs-source-dirs:   app
+  hs-source-dirs:   param-test1
+  default-language: GHC2021
+
+executable param-test2
+  import:           opts
+  main-is:          Main.hs
+  build-depends:
+    , base
+    , parameters
+
+  hs-source-dirs:   param-test2
   default-language: GHC2021
