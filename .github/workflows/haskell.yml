@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ghc: ['9.4.8', '9.6.4']
+        ghc: ['9.4.8', '9.6.6']
 
     steps:
     - uses: actions/checkout@v4
@@ -41,7 +41,7 @@ jobs:
     - name: Install dependencies
       run: |
         cabal update
-        cabal install shelltestrunner-1.10
+        cabal install --overwrite-policy=always shelltestrunner-1.10
         cabal build --only-dependencies --enable-tests --enable-benchmarks parameters parameters-fx
         
     - name: Build
