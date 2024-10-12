@@ -216,3 +216,7 @@ There are two ways to start an `Fx` computation:
 
 1. `runFx`, which starts an `Fx` action in which no arbitrary `IO` can be performed.
 2. `runFxWithIO`, which starts an `Fx` action in which arbitrary `IO` can be embedded with `embedIO`.
+
+### Provided effects
+
+This library provides two widely-used effects for convenience: `Param.Fx.State` and `Param.Fx.Error`.
