@@ -73,7 +73,7 @@ library
   build-depends:
     , base
     , containers
-    , ghc         >=9.4.8 && <9.6.4.0
+    , ghc         >=9.4.8 && <9.7
 
   -- Directories containing source files.
   hs-source-dirs:   src
