@@ -104,6 +104,7 @@ test-suite parameters-fx-test
   -- The entrypoint to the test suite.
   main-is:          Main.hs
   other-modules:
+    Param.Fx.Async
     Param.Fx.Time
     Param.Fx.Time.Mock
     Test.Param.Fx.Error
@@ -111,6 +112,7 @@ test-suite parameters-fx-test
 
   -- Test dependencies.
   build-depends:
+    , async
     , base
     , parameters
     , parameters-fx
